@@ -8,23 +8,24 @@ glMatrix.setMatrixArrayType(Array);
 
 let pSphere = [];
 
-function sphere2cat(out, r, theta, phi) {
-    // theta: inclination [0, pi]
-    // phi: azimuth [0, 2pi)
-    out[0] = r * Math.cos(phi) * Math.sin(theta);
-    out[1] = r * Math.sin(phi) * Math.sin(theta);
-    out[2] = r * Math.cos(theta);
+function pointOnSphere(out, y) {
+    y = y || (2.0 * Math.random() - 1.0);
+    const r = Math.sqrt(1.0 - y*y);
+    const phi = 2.0 * Math.PI * Math.random();
+    out[0] = r * Math.cos(phi);
+    out[1] = y;
+    out[2] = r * Math.sin(phi);
     out[3] = 1.0;
 }
 
-function hom2cat(out, v) {
+function hom2Cat(out, v) {
     out[0] = v[0] / v[3];
     out[1] = v[1] / v[3];
     out[2] = v[2] / v[3];
     out[3] = 1.0;
 }
 
-function draw_point(v) {
+function drawPoint(v) {
     let x = 0.5 * w * (1 + v[0]);
     let y = 0.5 * h * (1 - v[1]);
     // ellipse(x, y, 10, 10);
@@ -38,9 +39,8 @@ function setup() {
 
     for (let i = 0; i <= 1000; i++) {
         let v = vec4.create();
-        const theta = Math.random() * Math.PI;
-        const phi = Math.random() * 2.0 * Math.PI;
-        sphere2cat(v, 1.0, theta, phi);
+        const l = Math.random();
+        pointOnSphere(v, 2.0 * (1.0 - l*l*l) - 1.0);
         pSphere.push(v);
     }
 }
@@ -59,16 +59,17 @@ function draw() {
     mat4.multiply(modelViewProjection, projection, view);
 
     let model = mat4.create();
-    mat4.fromYRotation(model, glMatrix.toRadian(alpha));
+    mat4.rotateY(model, model, glMatrix.toRadian(alpha));
+    mat4.rotateZ(model, model, glMatrix.toRadian(120.0));
     mat4.multiply(modelViewProjection, modelViewProjection, model);
 
     background(241, 235, 223);
     pSphere.forEach(function(vin) {
         let v = vec4.clone(vin);
         vec4.transformMat4(v, v, modelViewProjection);
-        hom2cat(v, v);
-        draw_point(v);
+        hom2Cat(v, v);
+        drawPoint(v);
     });
 
-    alpha += 0.5;
+    alpha += 0.25;
 }
