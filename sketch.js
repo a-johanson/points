@@ -26,8 +26,8 @@ function hom2Cat(out, v) {
 }
 
 function drawPoint(v) {
-    let x = 0.5 * w * (1 + v[0]);
-    let y = 0.5 * h * (1 - v[1]);
+    const x = 0.5 * w * (1 + v[0]);
+    const y = 0.5 * h * (1 - v[1]);
     // ellipse(x, y, 10, 10);
     point(x, y);
 }
