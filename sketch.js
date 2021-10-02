@@ -2,11 +2,16 @@
 const w = 600;
 const h = 800;
 
-let alpha = 0;
+let alpha = 0.0;
+let beta  = 120.0;
 
 glMatrix.setMatrixArrayType(Array);
 
 let pSphere = [];
+
+function rand(a, b) {
+    return (b - a) * Math.random() + a;
+}
 
 function pointOnSphere(out, y) {
     y = y || (2.0 * Math.random() - 1.0);
@@ -37,10 +42,13 @@ function setup() {
     stroke(26, 24, 21);
     strokeWeight(1);
 
-    for (let i = 0; i <= 1000; i++) {
+    const pointCount = 7500;
+    for (let i = 0; i < pointCount; i++) {
         let v = vec4.create();
-        const l = Math.random();
-        pointOnSphere(v, 2.0 * (1.0 - l*l*l) - 1.0);
+        const s = 50;
+        const f = (i + s) / (pointCount + s);
+        const l = rand(0.0, Math.pow(f, 1.75));
+        pointOnSphere(v, 1.0 - 2.0 * Math.pow(l, 1.0));
         pSphere.push(v);
     }
 }
@@ -60,7 +68,7 @@ function draw() {
 
     let model = mat4.create();
     mat4.rotateY(model, model, glMatrix.toRadian(alpha));
-    mat4.rotateZ(model, model, glMatrix.toRadian(120.0));
+    mat4.rotateZ(model, model, glMatrix.toRadian(beta));
     mat4.multiply(modelViewProjection, modelViewProjection, model);
 
     background(241, 235, 223);
@@ -71,5 +79,11 @@ function draw() {
         drawPoint(v);
     });
 
-    alpha += 0.25;
+    alpha += 0.15;
+}
+
+function mouseDragged(event) {
+    const sensitivity = 0.2;
+    alpha += sensitivity * event.movementX;
+    beta  += sensitivity * event.movementY;
 }
