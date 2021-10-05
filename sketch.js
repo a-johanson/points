@@ -20,9 +20,10 @@ function createPointOnSphere(y) {
     return vec3.fromValues(r * Math.cos(phi), y, r * Math.sin(phi));
 }
 
-function drawPoint(v) {
-    const x = 0.5 * w * (1 + v[0]);
-    const y = 0.5 * h * (1 - v[1]);
+function drawPoint(p, c) {
+    const x = 0.5 * w * (1 + p[0]);
+    const y = 0.5 * h * (1 - p[1]);
+    stroke(c[0], c[1], c[2]);
     // ellipse(x, y, 10, 10);
     point(x, y);
 }
@@ -61,18 +62,23 @@ function draw() {
     mat4.multiply(modelViewProjection, projection, modelView);
 
     background(241, 235, 223);
-    pSphere.forEach(function(v) {
+    const screenCoordAndColor = pSphere.map(function(v) {
         let p = vec3.create();
         vec3.transformMat4(p, v, modelViewProjection);
         let n = vec3.create();
         vec3.transformMat3(n, v, normalMatrix);
 
-        if(n[2] > 0.0) {
-            stroke(26, 24, 21);
-        } else {
-            stroke(156, 144, 126);
+        let color = vec3.fromValues(26, 24, 21);
+        if(n[2] <= 0.0) {
+            vec3.scale(color, color, 5.0);
         }
-        drawPoint(p);
+        return [p, color];
+    });
+    screenCoordAndColor.sort((a, b) => a[0][3] - b[0][3]);
+    screenCoordAndColor.forEach(function(pointAndColor) {
+        const p = pointAndColor[0];
+        const c = pointAndColor[1];
+        drawPoint(p, c);
     });
 
     alpha += 0.15;
