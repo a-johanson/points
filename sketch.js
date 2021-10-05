@@ -7,6 +7,9 @@ let beta  = 120.0;
 
 glMatrix.setMatrixArrayType(Array);
 
+const fg = vec3.fromValues(26, 24, 21);
+const bg = vec3.fromValues(241, 235, 223);
+
 let pSphere = [];
 
 function rand(a, b) {
@@ -30,7 +33,6 @@ function drawPoint(p, c) {
 
 function setup() {
     createCanvas(w, h);
-    stroke(26, 24, 21);
     strokeWeight(1);
 
     const pointCount = 7500;
@@ -49,29 +51,37 @@ function draw() {
     const eye     = vec3.fromValues(0.0, 1.5, 10.0);
     const center  = vec3.fromValues(0.0, 0.0, 0.0);
     const up      = vec3.fromValues(0.0, 1.0, 0.0);
-    let modelView = mat4.create();
-    mat4.lookAt(modelView, eye, center, up);
+    let view      = mat4.create();
+    mat4.lookAt(view, eye, center, up);
 
+    let light = vec3.fromValues(1.5, 1.5, 0.9);
+    vec3.transformMat4(light, light, view);
+
+    let modelView = mat4.clone(view);
     mat4.rotateY(modelView, modelView, glMatrix.toRadian(alpha));
     mat4.rotateZ(modelView, modelView, glMatrix.toRadian(beta));
 
     let normalMatrix = mat3.create();
     mat3.normalFromMat4(normalMatrix, modelView);
 
-    let modelViewProjection = mat4.create();
-    mat4.multiply(modelViewProjection, projection, modelView);
-
-    background(241, 235, 223);
+    background(bg[0], bg[1], bg[2]);
     const screenCoordAndColor = pSphere.map(function(v) {
         let p = vec3.create();
-        vec3.transformMat4(p, v, modelViewProjection);
+        vec3.transformMat4(p, v, modelView);
+
+        let l = vec3.clone(light);
+        vec3.subtract(l, l, p);
+        vec3.normalize(l, l);
+
+        vec3.transformMat4(p, p, projection);
+
         let n = vec3.create();
         vec3.transformMat3(n, v, normalMatrix);
+        vec3.normalize(n, n);
+        const t = 0.5 * (vec3.dot(n, l) + 1.0);
 
-        let color = vec3.fromValues(26, 24, 21);
-        if(n[2] <= 0.0) {
-            vec3.scale(color, color, 5.0);
-        }
+        let color = vec3.create();
+        vec3.lerp(color, fg, bg, t);
         return [p, color];
     });
     screenCoordAndColor.sort((a, b) => a[0][3] - b[0][3]);
