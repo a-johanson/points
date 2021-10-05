@@ -14,9 +14,9 @@ function rand(a, b) {
 }
 
 function pointOnSphere(out, y) {
-    y = y || (2.0 * Math.random() - 1.0);
+    y = y || rand(-1.0, 1.0);
     const r = Math.sqrt(1.0 - y*y);
-    const phi = 2.0 * Math.PI * Math.random();
+    const phi = rand(0.0, 2.0 * Math.PI);
     out[0] = r * Math.cos(phi);
     out[1] = y;
     out[2] = r * Math.sin(phi);
