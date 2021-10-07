@@ -3,8 +3,7 @@ const { jsPDF } = window.jspdf;
 
 glMatrix.setMatrixArrayType(Array);
 
-const w_canvas = 600;
-const h_canvas = 800;
+const canvasDim = [600, 900];
 
 let alpha = 30.0;
 let beta  = 135.0;
@@ -40,7 +39,7 @@ function screenProjection(points, aspectRatio) {
     let projection = mat4.create();
     mat4.perspective(projection, glMatrix.toRadian(30.0), aspectRatio, 0.1);
 
-    const eye     = vec3.fromValues(0.0, 1.5, 10.0);
+    const eye     = vec3.fromValues(0.0, 0.5, 10.5);
     const center  = vec3.fromValues(0.0, 0.0, 0.0);
     const up      = vec3.fromValues(0.0, 1.0, 0.0);
     let view      = mat4.create();
@@ -72,7 +71,7 @@ function screenProjection(points, aspectRatio) {
 
         const t = 0.5 * (vec3.dot(n, l) + 1.0);
         let color = vec3.create();
-        vec3.lerp(color, fg, bg, 0.9 * (1.0 - Math.pow(1.0 - t, 1.5)));
+        vec3.lerp(color, fg, bg, 1.0 - Math.pow(1.0 - t, 1.5));
         return [p, color];
     });
     screenCoordAndColor.sort((a, b) => a[0][3] - b[0][3]);
@@ -81,20 +80,20 @@ function screenProjection(points, aspectRatio) {
 
 
 function drawPointOnCanvas(p, c) {
-    const x = 0.5 * w_canvas * (1 + p[0]);
-    const y = 0.5 * h_canvas * (1 - p[1]);
+    const x = 0.5 * canvasDim[0] * (1 + p[0]);
+    const y = 0.5 * canvasDim[1] * (1 - p[1]);
     stroke(c[0], c[1], c[2]);
     // ellipse(x, y, 10, 10);
     point(x, y);
 }
 
 function setup() {
-    createCanvas(w_canvas, h_canvas);
+    createCanvas(canvasDim[0], canvasDim[1]);
     strokeWeight(1);
 }
 
 function draw() {
-    const screenCoordAndColor = screenProjection(pSphere, w_canvas / h_canvas);
+    const screenCoordAndColor = screenProjection(pSphere, canvasDim[0] / canvasDim[1]);
     background(bg[0], bg[1], bg[2]);
     screenCoordAndColor.forEach(function(pointAndColor) {
         const p = pointAndColor[0];
@@ -114,16 +113,17 @@ function mouseDragged(event) {
 
 function savePdf() {
     const pageDim = [210, 297];
-    const drawDim = [150, 200];
+    const drawDim = [150, 225];
     const drawOrigin = [0.5 * (pageDim[0] - drawDim[0]), 0.5 * (pageDim[1] - drawDim[1])];
 
-    const points = pointsSphere(25000);
+    const points = pointsSphere(100000);
 
     const doc = new jsPDF({
+        format: [pageDim[0], pageDim[1]],
         compress: true
     });
-    doc.setLineWidth(0.5);
-    doc.setDrawColor(fg[0], fg[1], fg[2]);
+    // doc.setLineWidth(0.5);
+    // doc.setDrawColor(fg[0], fg[1], fg[2]);
     doc.setFillColor(bg[0], bg[1], bg[2]);
     doc.rect(drawOrigin[0], drawOrigin[1], drawDim[0], drawDim[1], "F");
 
