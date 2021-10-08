@@ -16,7 +16,7 @@ let pSphere = pointsSphere(7500);
 function pointsSphere(pointCount) {
     let p = [];
     for (let i = 0; i < pointCount; i++) {
-        const s = 50;
+        const s = 0.01 * pointCount;
         const f = (i + s) / (pointCount + s);
         const l = rand(0.0, Math.pow(f, 1.75));
         p.push(createPointOnSphere(1.0 - 2.0 * Math.pow(l, 1.0)));
