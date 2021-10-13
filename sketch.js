@@ -5,21 +5,22 @@ glMatrix.setMatrixArrayType(Array);
 
 const canvasDim = [600, 900];
 
-let alpha = 30.0;
-let beta  = 135.0;
+let alpha  = 30.0;
+let beta   = 135.0;
+let noiseC = 0.0;
 
 const fg = vec3.fromValues(26, 24, 21);
 const bg = vec3.fromValues(241, 235, 223);
 
-let pSphere = pointsSphere(7500);
+let pSphere = [];
 
-function pointsSphere(pointCount) {
+function pointsAndNormalsOnSphere(pointCount) {
     let p = [];
     for (let i = 0; i < pointCount; i++) {
         const s = 0.01 * pointCount;
         const f = (i + s) / (pointCount + s);
         const l = rand(0.0, Math.pow(f, 1.75));
-        p.push(createPointOnSphere(1.0 - 2.0 * Math.pow(l, 1.0)));
+        p.push(pointAndNormalOnSphere(1.0 - 2.0 * Math.pow(l, 1.0)));
     }
     return p;
 }
@@ -28,14 +29,37 @@ function rand(a, b) {
     return (b - a) * Math.random() + a;
 }
 
-function createPointOnSphere(y) {
-    y = y || rand(-1.0, 1.0);
+function pointOnSphere(y, phi) {
     const r = Math.sqrt(1.0 - y*y);
-    const phi = rand(0.0, 2.0 * Math.PI);
-    return vec3.fromValues(r * Math.cos(phi), y, r * Math.sin(phi));
+    const x = r * Math.cos(phi);
+    const z = r * Math.sin(phi);
+    const noiseScale = 3.5;
+    const m = 0.5 * noise(noiseScale * (x + noiseC), noiseScale * (y + noiseC), noiseScale * (z + noiseC)) + 0.75;
+    return vec3.fromValues(m * x, m * y, m * z);
 }
 
-function screenProjection(points, aspectRatio) {
+function sgn(x) {
+    return x < 0.0 ? -1.0 : 1.0;
+}
+
+function pointAndNormalOnSphere(y, phi) {
+    y = y || rand(-1.0, 1.0);
+    phi = phi || rand(0.0, 2.0 * Math.PI);
+    const p0 = pointOnSphere(y, phi);
+    const eps = 0.001;
+    let p1 = pointOnSphere(y - sgn(y) * eps, phi);
+    let p2 = pointOnSphere(y, phi + eps);
+    vec3.subtract(p1, p1, p0);
+    vec3.subtract(p2, p2, p0);
+    vec3.cross(p1, p1, p2);
+    vec3.normalize(p1, p1);
+    if(vec3.dot(p0, p1) < 0.0) {
+        vec3.scale(p1, p1, -1.0);
+    }
+    return [p0, p1];
+}
+
+function screenProjection(pointsAndNormals, aspectRatio) {
     let projection = mat4.create();
     mat4.perspective(projection, glMatrix.toRadian(30.0), aspectRatio, 0.1);
 
@@ -55,9 +79,9 @@ function screenProjection(points, aspectRatio) {
     let normalMatrix = mat3.create();
     mat3.normalFromMat4(normalMatrix, modelView);
 
-    const screenCoordAndColor = points.map(function(v) {
+    const screenCoordAndColor = pointsAndNormals.map(function(v) {
         let p = vec3.create();
-        vec3.transformMat4(p, v, modelView);
+        vec3.transformMat4(p, v[0], modelView);
 
         let l = vec3.clone(light);
         vec3.subtract(l, l, p);
@@ -66,12 +90,13 @@ function screenProjection(points, aspectRatio) {
         vec3.transformMat4(p, p, projection);
 
         let n = vec3.create();
-        vec3.transformMat3(n, v, normalMatrix);
+        vec3.transformMat3(n, v[1], normalMatrix);
         vec3.normalize(n, n);
 
-        const t = 0.5 * (vec3.dot(n, l) + 1.0);
         let color = vec3.create();
-        vec3.lerp(color, fg, bg, 1.0 - Math.pow(1.0 - t, 1.5));
+        const s = 0.5 * (vec3.dot(n, l) + 1.0);
+        const t = 1.0 - Math.pow(1.0 - s, 1.5);
+        vec3.lerp(color, fg, bg, t);
         return [p, color];
     });
     screenCoordAndColor.sort((a, b) => a[0][3] - b[0][3]);
@@ -90,9 +115,15 @@ function drawPointOnCanvas(p, c) {
 function setup() {
     createCanvas(canvasDim[0], canvasDim[1]);
     strokeWeight(1);
+
+    noiseSeed(425960);
+    noiseDetail(2, 0.25);
+
+    // savePdf();
 }
 
 function draw() {
+    pSphere = pointsAndNormalsOnSphere(10000);
     const screenCoordAndColor = screenProjection(pSphere, canvasDim[0] / canvasDim[1]);
     background(bg[0], bg[1], bg[2]);
     screenCoordAndColor.forEach(function(pointAndColor) {
@@ -101,6 +132,7 @@ function draw() {
         drawPointOnCanvas(p, c);
     });
     // alpha += 0.15;
+    noiseC += 0.01;
 }
 
 function mouseDragged(event) {
@@ -116,7 +148,7 @@ function savePdf() {
     const drawDim = [150, 225];
     const drawOrigin = [0.5 * (pageDim[0] - drawDim[0]), 0.5 * (pageDim[1] - drawDim[1])];
 
-    const points = pointsSphere(100000);
+    const pointsAndNormals = pointsAndNormalsOnSphere(100000);
 
     const doc = new jsPDF({
         format: [pageDim[0], pageDim[1]],
@@ -127,17 +159,15 @@ function savePdf() {
     doc.setFillColor(bg[0], bg[1], bg[2]);
     doc.rect(drawOrigin[0], drawOrigin[1], drawDim[0], drawDim[1], "F");
 
-    const screenCoordAndColor = screenProjection(points, drawDim[0] / drawDim[1]);
+    const screenCoordAndColor = screenProjection(pointsAndNormals, drawDim[0] / drawDim[1]);
     screenCoordAndColor.forEach(function(pointAndColor) {
         const p = pointAndColor[0];
         const c = pointAndColor[1];
         const x = drawOrigin[0] + 0.5 * drawDim[0] * (1 + p[0]);
         const y = drawOrigin[1] + 0.5 * drawDim[1] * (1 - p[1]);
         doc.setFillColor(c[0], c[1], c[2]);
-        doc.circle(x, y, 0.1, "F");
+        doc.circle(x, y, 0.05, "F");
     });
 
     doc.save("a4.pdf");
 }
-
-// savePdf();
