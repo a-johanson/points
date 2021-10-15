@@ -5,9 +5,16 @@ glMatrix.setMatrixArrayType(Array);
 
 const canvasDim = [600, 900];
 
-let alpha  = 30.0;
-let beta   = 135.0;
-let noiseC = 0.0;
+let sliderNoiseC;
+let sliderNoiseScale;
+let sliderNoiseMag;
+
+let alpha = 30.0;
+let beta  = 135.0;
+
+let noiseC     = 0.0;
+let noiseScale = 3.5;
+let noiseMag   = 0.5;
 
 const fg = vec3.fromValues(26, 24, 21);
 const bg = vec3.fromValues(241, 235, 223);
@@ -33,8 +40,9 @@ function pointOnSphere(y, phi) {
     const r = Math.sqrt(1.0 - y*y);
     const x = r * Math.cos(phi);
     const z = r * Math.sin(phi);
-    const noiseScale = 3.5;
-    const m = 0.5 * noise(noiseScale * (x + noiseC), noiseScale * (y + noiseC), noiseScale * (z + noiseC)) + 0.75;
+    const m = noiseMag * (2.0 * noise(noiseScale * (x + noiseC), noiseScale * (y + noiseC), noiseScale * (z + noiseC)) - 1.0) + 1.0;
+    // const m = 0.2 * Math.cos(noiseScale * (x + noiseC)) * Math.cos(noiseScale * (y + noiseC)) * Math.cos(noiseScale * (z + noiseC)) + 0.9;
+    // const m = 1.0;
     return vec3.fromValues(m * x, m * y, m * z);
 }
 
@@ -117,12 +125,29 @@ function setup() {
     strokeWeight(1);
 
     noiseSeed(425960);
-    noiseDetail(2, 0.25);
+    noiseDetail(4, 0.5);
 
-    // savePdf();
+    sliderNoiseC = createSlider(0, 10, 0, 0.01);
+    sliderNoiseC.position(10, 10);
+    sliderNoiseC.style("width", "580px");
+
+    sliderNoiseScale = createSlider(0, 10, 3.5, 0.01);
+    sliderNoiseScale.position(10, 35);
+    sliderNoiseScale.style("width", "580px");
+
+    sliderNoiseMag = createSlider(0, 1, 0.5, 0.01);
+    sliderNoiseMag.position(10, 60);
+    sliderNoiseMag.style("width", "580px");
+
+    let button = createButton("Save PDF");
+    button.position(10, 85);
+    button.mousePressed(savePdf);
 }
 
 function draw() {
+    noiseC = sliderNoiseC.value();
+    noiseScale = sliderNoiseScale.value();
+    noiseMag = sliderNoiseMag.value();
     pSphere = pointsAndNormalsOnSphere(10000);
     const screenCoordAndColor = screenProjection(pSphere, canvasDim[0] / canvasDim[1]);
     background(bg[0], bg[1], bg[2]);
@@ -132,7 +157,7 @@ function draw() {
         drawPointOnCanvas(p, c);
     });
     // alpha += 0.15;
-    noiseC += 0.01;
+    // noiseC += 0.01;
 }
 
 function mouseDragged(event) {
