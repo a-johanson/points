@@ -16,8 +16,20 @@ let noiseC     = 0.0;
 let noiseScale = 3.5;
 let noiseMag   = 0.5;
 
-const fg = vec3.fromValues(26, 24, 21);
+ const fg = vec3.fromValues(26, 24, 21);
 const bg = vec3.fromValues(241, 235, 223);
+// const bg = vec3.fromValues(238,226,211);
+const fgColors = [
+    fg, fg, fg, fg,
+    vec3.fromValues(255,119,119),
+    vec3.fromValues(162,65,107),
+    vec3.fromValues(133,39,71),
+    vec3.fromValues(201,193,159),
+    vec3.fromValues(137,147,124),
+    vec3.fromValues(148,185,175),
+    vec3.fromValues(84,150,166),
+    vec3.fromValues(250,209,5)
+];
 
 let pSphere = [];
 
@@ -104,7 +116,7 @@ function screenProjection(pointsAndNormals, aspectRatio) {
         let color = vec3.create();
         const s = 0.5 * (vec3.dot(n, l) + 1.0);
         const t = 1.0 - Math.pow(1.0 - s, 1.5);
-        vec3.lerp(color, fg, bg, t);
+        vec3.lerp(color, fgColors[Math.floor(Math.random() * fgColors.length)], bg, t);
         return [p, color];
     });
     screenCoordAndColor.sort((a, b) => a[0][3] - b[0][3]);
