@@ -3,7 +3,7 @@ const { jsPDF } = window.jspdf;
 
 glMatrix.setMatrixArrayType(Array);
 
-const canvasDim = [600, 900];
+const canvasDim = [600, 800];
 
 let sliderNoiseC;
 let sliderNoiseScale;
@@ -12,12 +12,13 @@ let sliderNoiseMag;
 let alpha = 30.0;
 let beta  = 135.0;
 
-let noiseC     = 0.0;
-let noiseScale = 3.5;
-let noiseMag   = 0.5;
+let noiseC     = 5.48;
+let noiseScale = 3.83;
+let noiseMag   = 0.13;
 
  const fg = vec3.fromValues(26, 24, 21);
-const bg = vec3.fromValues(241, 235, 223);
+// const bg = vec3.fromValues(241, 235, 223);
+const bg = vec3.fromValues(250, 247, 242);
 // const bg = vec3.fromValues(238,226,211);
 const fgColors = [
     fg, fg, fg, fg,
@@ -83,7 +84,7 @@ function screenProjection(pointsAndNormals, aspectRatio) {
     let projection = mat4.create();
     mat4.perspective(projection, glMatrix.toRadian(30.0), aspectRatio, 0.1);
 
-    const eye     = vec3.fromValues(0.0, 0.5, 10.5);
+    const eye     = vec3.fromValues(0.0, 0.5, 8.5);
     const center  = vec3.fromValues(0.0, 0.0, 0.0);
     const up      = vec3.fromValues(0.0, 1.0, 0.0);
     let view      = mat4.create();
@@ -139,15 +140,15 @@ function setup() {
     noiseSeed(425960);
     noiseDetail(4, 0.5);
 
-    sliderNoiseC = createSlider(0, 10, 0, 0.01);
+    sliderNoiseC = createSlider(0, 10, noiseC, 0.01);
     sliderNoiseC.position(10, 10);
     sliderNoiseC.style("width", "580px");
 
-    sliderNoiseScale = createSlider(0, 10, 3.5, 0.01);
+    sliderNoiseScale = createSlider(0, 10, noiseScale, 0.01);
     sliderNoiseScale.position(10, 35);
     sliderNoiseScale.style("width", "580px");
 
-    sliderNoiseMag = createSlider(0, 1, 0.5, 0.01);
+    sliderNoiseMag = createSlider(0, 1, noiseMag, 0.01);
     sliderNoiseMag.position(10, 60);
     sliderNoiseMag.style("width", "580px");
 
@@ -173,16 +174,16 @@ function draw() {
 }
 
 function mouseDragged(event) {
-    const sensitivity = 0.2;
-    alpha += sensitivity * event.movementX;
-    beta  += sensitivity * event.movementY;
+    // const sensitivity = 0.2;
+    // alpha += sensitivity * event.movementX;
+    // beta  += sensitivity * event.movementY;
     // console.log("alpha = " + alpha + " deg, beta = " + beta + " deg");
 }
 
 
 function savePdf() {
     const pageDim = [210, 297];
-    const drawDim = [150, 225];
+    const drawDim = [150, 200];
     const drawOrigin = [0.5 * (pageDim[0] - drawDim[0]), 0.5 * (pageDim[1] - drawDim[1])];
 
     const pointsAndNormals = pointsAndNormalsOnSphere(100000);
